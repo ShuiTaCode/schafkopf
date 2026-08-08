@@ -1,0 +1,129 @@
+name: Deploy Hetzner
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-hetzner-schafkopf
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE_NAME: ghcr.io/shuitacode/schafkopf
+
+jobs:
+  quality:
+    name: Quality gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+
+  build-push:
+    name: Build & push image
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to Hetzner
+    needs: build-push
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Make GHCR package public
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh api --method PATCH \
+            -H "Accept: application/vnd.github+json" \
+            "/user/packages/container/schafkopf" \
+            -f visibility=public \
+            || echo "WARN: could not set package visibility"
+
+      - name: Upload compose files
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: 167.233.204.171
+          username: shuita
+          key: ${{ secrets.HETZNER_SSH_PRIVATE_KEY }}
+          source: "deploy/hetzner/docker-compose.yml,deploy/hetzner/docker-compose.forward-auth.yml"
+          target: /opt/apps/schafkopf
+          strip_components: 2
+
+      - name: Pull and restart stack
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          GHCR_PULL_USERNAME: ${{ github.actor }}
+          GHCR_PULL_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          host: 167.233.204.171
+          username: shuita
+          key: ${{ secrets.HETZNER_SSH_PRIVATE_KEY }}
+          envs: GHCR_PULL_USERNAME,GHCR_PULL_TOKEN
+          script: |
+            set -euo pipefail
+            SHORT_SHA="${{ github.sha }}"
+            SHORT_SHA="${SHORT_SHA:0:7}"
+            SHA_IMAGE="ghcr.io/shuitacode/schafkopf:${SHORT_SHA}"
+
+            mkdir -p /opt/apps/schafkopf
+            cd /opt/apps/schafkopf
+
+            touch .env
+            chmod 600 .env
+            grep -v '^SCHAFKOPF_IMAGE=' .env > .env.tmp || true
+            echo "SCHAFKOPF_IMAGE=${SHA_IMAGE}" >> .env.tmp
+            mv .env.tmp .env
+            chmod 600 .env
+
+            echo "${GHCR_PULL_TOKEN}" | docker login ghcr.io -u "${GHCR_PULL_USERNAME}" --password-stdin
+            docker compose -f docker-compose.yml -f docker-compose.forward-auth.yml pull
+            docker compose -f docker-compose.yml -f docker-compose.forward-auth.yml up -d --remove-orphans
+            docker logout ghcr.io >/dev/null 2>&1 || true
+            docker image prune -f
+            docker ps --filter name=schafkopf --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}'
+            sleep 3
+            curl -sI https://schafkopf.shui-ta.com/ | head -n 5 || true

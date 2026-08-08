@@ -1,0 +1,7 @@
+# Kept for compatibility with enable-authentik-forward-auth.sh
+# Base compose already enables authentik@file middleware.
+
+services:
+  schafkopf:
+    labels:
+      traefik.http.routers.schafkopf.middlewares: authentik@file,security-headers@file
