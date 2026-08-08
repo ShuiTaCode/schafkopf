@@ -2,6 +2,8 @@
 
 Bayerisches Schafkopf im Browser: **du gegen drei Computer** (Sepp, Hias, Wastl).
 
+**Live:** https://schafkopf.shui-ta.com (Authentik Forward Auth, Gruppe `app-schafkopf`)
+
 ## Spielen (lokal)
 
 ```bash
@@ -17,6 +19,7 @@ npm run dev
 - Rufspiel, Farbsolo, Wenz
 - Farb-/Trumpfzwang, Rufsau, Davonlaufen
 - Heuristik-Bots
+- Mobile-optimierte UI
 - Alles läuft im Frontend (kein Backend)
 
 ## Qualität
@@ -28,6 +31,6 @@ npm run build
 
 ## Deploy (Hetzner)
 
-CI baut ein nginx-Image und deployt nach `/opt/apps/schafkopf` hinter Traefik + Authentik Forward Auth (`schafkopf.shui-ta.com`, Gruppe `app-schafkopf`).
+CI baut ein nginx-Image und deployt nach `/opt/apps/schafkopf` hinter Traefik + Authentik Forward Auth.
 
-Voraussetzung: GitHub-Repo unter `ShuiTaCode`, Secret `HETZNER_SSH_PRIVATE_KEY`, Authentik-App/Gruppe provisioniert.
+Secret: `HETZNER_SSH_PRIVATE_KEY`
