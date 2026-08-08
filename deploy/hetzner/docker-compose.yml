@@ -1,5 +1,5 @@
-# Schafkopf on Hetzner — static SPA behind Traefik + Authentik
-# Deployed to /opt/apps/schafkopf/ by CI
+# Example Compose for Traefik (+ optional Authentik Forward Auth overlay).
+# Adapt Host(), image name, and network to your environment.
 
 services:
   schafkopf:
@@ -11,7 +11,7 @@ services:
     labels:
       traefik.enable: "true"
       traefik.docker.network: traefik-public
-      traefik.http.routers.schafkopf.rule: Host(`schafkopf.shui-ta.com`)
+      traefik.http.routers.schafkopf.rule: Host(`${SCHAFKOPF_HOST:-schafkopf.shui-ta.com}`)
       traefik.http.routers.schafkopf.entrypoints: websecure
       traefik.http.routers.schafkopf.tls.certresolver: letsencrypt
       traefik.http.routers.schafkopf.middlewares: authentik@file,security-headers@file

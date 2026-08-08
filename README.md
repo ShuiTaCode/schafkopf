@@ -1,36 +1,36 @@
 # Schafkopf
 
-Bayerisches Schafkopf im Browser: **du gegen drei Computer** (Sepp, Hias, Wastl).
+Bayerisches Schafkopf im Browser — allein gegen drei Computer (Sepp, Hias, Wastl).
 
-**Live:** https://schafkopf.shui-ta.com (Authentik Forward Auth, Gruppe `app-schafkopf`)
+**Spielen:** https://schafkopf.shui-ta.com
 
-## Spielen (lokal)
+## Lokal starten
 
 ```bash
 npm install
 npm run dev
 ```
 
-Öffne http://127.0.0.1:5173/
+Dann http://127.0.0.1:5173/ öffnen.
 
-## Umfang (MVP)
+## Was drin ist
 
 - Langes Blatt (32 Karten)
 - Rufspiel, Farbsolo, Wenz
 - Farb-/Trumpfzwang, Rufsau, Davonlaufen
 - Heuristik-Bots
-- Mobile-optimierte UI
-- Alles läuft im Frontend (kein Backend)
+- Mobile-taugliche UI
+- Reines Frontend (kein Backend nötig)
 
-## Qualität
+## Entwickeln
 
 ```bash
 npm test
 npm run build
 ```
 
-## Deploy (Hetzner)
+## Selbst hosten
 
-CI baut ein nginx-Image und deployt nach `/opt/apps/schafkopf` hinter Traefik + Authentik Forward Auth.
+Das Spiel ist eine statische SPA. Nach `npm run build` reicht jeder Static-File-Server (oder das mitgelieferte `Dockerfile` mit nginx).
 
-Secret: `HETZNER_SSH_PRIVATE_KEY`
+Unter `deploy/` liegt eine optionale Vorlage für Docker Compose hinter einem Reverse Proxy. Domain, Auth und CI-Secrets sind absichtlich nicht fest verdrahtet — bitte an die eigene Umgebung anpassen. Details: [docs/self-hosting.md](docs/self-hosting.md).

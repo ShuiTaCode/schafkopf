@@ -1,4 +1,4 @@
-name: Deploy Hetzner
+name: Deploy
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: deploy-hetzner-schafkopf
+  group: deploy-schafkopf
   cancel-in-progress: false
 
 permissions:
@@ -65,7 +65,7 @@ jobs:
           cache-to: type=gha,mode=max
 
   deploy:
-    name: Deploy to Hetzner
+    name: Deploy over SSH
     needs: build-push
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -86,11 +86,11 @@ jobs:
       - name: Upload compose files
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: 167.233.204.171
-          username: shuita
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.HETZNER_SSH_PRIVATE_KEY }}
           source: "deploy/hetzner/docker-compose.yml,deploy/hetzner/docker-compose.forward-auth.yml"
-          target: /opt/apps/schafkopf
+          target: ${{ secrets.DEPLOY_PATH }}
           strip_components: 2
 
       - name: Pull and restart stack
@@ -98,19 +98,21 @@ jobs:
         env:
           GHCR_PULL_USERNAME: ${{ github.actor }}
           GHCR_PULL_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          DEPLOY_HEALTHCHECK_URL: ${{ secrets.DEPLOY_HEALTHCHECK_URL }}
         with:
-          host: 167.233.204.171
-          username: shuita
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.HETZNER_SSH_PRIVATE_KEY }}
-          envs: GHCR_PULL_USERNAME,GHCR_PULL_TOKEN
+          envs: GHCR_PULL_USERNAME,GHCR_PULL_TOKEN,DEPLOY_PATH,DEPLOY_HEALTHCHECK_URL
           script: |
             set -euo pipefail
             SHORT_SHA="${{ github.sha }}"
             SHORT_SHA="${SHORT_SHA:0:7}"
             SHA_IMAGE="ghcr.io/shuitacode/schafkopf:${SHORT_SHA}"
 
-            mkdir -p /opt/apps/schafkopf
-            cd /opt/apps/schafkopf
+            mkdir -p "${DEPLOY_PATH}"
+            cd "${DEPLOY_PATH}"
 
             touch .env
             chmod 600 .env
@@ -126,4 +128,6 @@ jobs:
             docker image prune -f
             docker ps --filter name=schafkopf --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}'
             sleep 3
-            curl -sI https://schafkopf.shui-ta.com/ | head -n 5 || true
+            if [[ -n "${DEPLOY_HEALTHCHECK_URL:-}" ]]; then
+              curl -sI "${DEPLOY_HEALTHCHECK_URL}" | head -n 5 || true
+            fi
