@@ -15,11 +15,12 @@ Dann http://127.0.0.1:5173/ öffnen.
 
 ## Was drin ist
 
-- Langes Blatt (32 Karten)
-- Rufspiel, Farbsolo, Wenz
+- Langes Blatt (32 Karten), bayerische Farben (Eichel, Gras, Herz, Schellen)
+- Rufspiel, Wenz und Farbsolo (Reihenfolge laut Schafkopfordnung)
 - Farb-/Trumpfzwang, Rufsau, Davonlaufen
+- Laufende Augen während der Runde, Stich bleibt bis „Weiter“
 - Heuristik-Bots
-- Mobile-taugliche UI
+- Mobile-taugliche Wirtshaus-UI
 - Reines Frontend (kein Backend nötig)
 
 ## Entwickeln

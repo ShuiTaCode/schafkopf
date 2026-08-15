@@ -1,21 +1,10 @@
-import type { CardId, Suit } from '../game/types'
+import type { CSSProperties } from 'react'
+import type { CardId } from '../game/types'
 import { parseCard } from '../game/deck'
 import { RANK_NAMES, SUIT_NAMES } from '../game/types'
+import { CardBack } from './cardArt'
+import { CARD_SPRITES, DECK_SHEET } from './deckSheet'
 import './CardView.css'
-
-const SUIT_SYMBOL: Record<Suit, string> = {
-  E: '♠', // stylized; Bavarian suits via color + label
-  G: '♣',
-  H: '♥',
-  S: '♦',
-}
-
-const SUIT_CLASS: Record<Suit, string> = {
-  E: 'suit-eichel',
-  G: 'suit-gras',
-  H: 'suit-herz',
-  S: 'suit-schell',
-}
 
 interface Props {
   card: CardId
@@ -24,28 +13,44 @@ interface Props {
   faceDown?: boolean
   onClick?: () => void
   compact?: boolean
+  fanDeg?: number
 }
 
-export function CardView({ card, selected, disabled, faceDown, onClick, compact }: Props) {
-  if (faceDown) {
-    return <div className={`sk-card back ${compact ? 'compact' : ''}`} aria-hidden />
-  }
-
+export function CardView({
+  card,
+  selected,
+  disabled,
+  faceDown,
+  onClick,
+  compact,
+  fanDeg = 0,
+}: Props) {
   const { suit, rank } = parseCard(card)
-  const label = `${SUIT_NAMES[suit]} ${RANK_NAMES[rank]}`
+  const label = faceDown ? 'Karte verdeckt' : `${SUIT_NAMES[suit]} ${RANK_NAMES[rank]}`
+  const interactive = Boolean(onClick) && !disabled
+  const sprite = CARD_SPRITES[card]
+
+  const style = {
+    '--fan': `${fanDeg}deg`,
+    '--sx': sprite.x,
+    '--sy': sprite.y,
+    '--cw': sprite.w,
+    '--ch': sprite.h,
+    '--sw': DECK_SHEET.width,
+    '--sh': DECK_SHEET.height,
+  } as CSSProperties
 
   return (
     <button
       type="button"
-      className={`sk-card ${SUIT_CLASS[suit]} ${selected ? 'selected' : ''} ${compact ? 'compact' : ''} ${disabled ? 'is-disabled' : ''} ${onClick ? 'is-interactive' : ''}`}
+      className={`sk-card ${compact ? 'compact' : ''} ${selected ? 'selected' : ''} ${disabled ? 'is-disabled' : ''} ${interactive ? 'is-interactive' : ''} ${faceDown ? 'is-back' : 'is-face'}`}
+      style={style}
       disabled={Boolean(onClick) && disabled}
       onClick={onClick}
       aria-label={label}
       title={label}
     >
-      <span className="rank">{rank === 'A' ? 'A' : rank}</span>
-      <span className="suit-sym">{SUIT_SYMBOL[suit]}</span>
-      <span className="suit-name">{SUIT_NAMES[suit]}</span>
+      {faceDown ? <CardBack /> : <span className="sk-card-face" />}
     </button>
   )
 }

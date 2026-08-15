@@ -85,21 +85,21 @@ export function trickWinner(cards: { player: number; card: CardId }[], contract:
   return best.player
 }
 
-export function sortHand(cards: CardId[], contract: Contract | null): CardId[] {
-  if (!contract) {
-    const suitRank: Record<Suit, number> = { E: 0, G: 1, H: 2, S: 3 }
-    const rankRank: Record<Rank, number> = { A: 0, '10': 1, K: 2, O: 3, U: 4, '9': 5, '8': 6, '7': 7 }
-    return [...cards].sort((a, b) => {
-      const pa = parseCard(a)
-      const pb = parseCard(b)
-      return suitRank[pa.suit] - suitRank[pb.suit] || rankRank[pa.rank] - rankRank[pb.rank]
-    })
-  }
+/** Beim Geben wie Rufspiel sortieren: Ober, Unter, Herz, dann Fehlfarben. */
+const DEFAULT_HAND_CONTRACT: Contract = {
+  kind: 'rufspiel',
+  color: 'E',
+  caller: 0,
+  partner: 1,
+  calledAce: 'EA',
+}
 
-  const trumps = trumpOrder(contract)
+export function sortHand(cards: CardId[], contract: Contract | null): CardId[] {
+  const by = contract ?? DEFAULT_HAND_CONTRACT
+  const trumps = trumpOrder(by)
   return [...cards].sort((a, b) => {
-    const ta = isTrump(a, contract)
-    const tb = isTrump(b, contract)
+    const ta = isTrump(a, by)
+    const tb = isTrump(b, by)
     if (ta && tb) return trumps.indexOf(a) - trumps.indexOf(b)
     if (ta) return -1
     if (tb) return 1
@@ -109,6 +109,6 @@ export function sortHand(cards: CardId[], contract: Contract | null): CardId[] {
       const order: Suit[] = ['E', 'G', 'H', 'S']
       return order.indexOf(pa.suit) - order.indexOf(pb.suit)
     }
-    return colorOrder(pa.suit, contract).indexOf(a) - colorOrder(pb.suit, contract).indexOf(b)
+    return colorOrder(pa.suit, by).indexOf(a) - colorOrder(pb.suit, by).indexOf(b)
   })
 }

@@ -8,6 +8,20 @@ function baseValue(contract: Contract): number {
   return 2 // solo / wenz
 }
 
+export function runningAugen(
+  contract: Contract,
+  tricks: FinishedTrick[],
+): { playing: number; defending: number } {
+  const playing = playingTeam(contract)
+  let playingPoints = 0
+  let defendingPoints = 0
+  for (const trick of tricks) {
+    if (playing.includes(trick.winner)) playingPoints += trick.points
+    else defendingPoints += trick.points
+  }
+  return { playing: playingPoints, defending: defendingPoints }
+}
+
 export function scoreGame(contract: Contract, tricks: FinishedTrick[]): GameResult {
   const playing = playingTeam(contract) as PlayerId[]
   const defending = PLAYERS.filter((p) => !playing.includes(p))

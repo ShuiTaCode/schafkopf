@@ -3,7 +3,7 @@ import { SchafkopfGame } from './game/game'
 import type { Bid, CardId, PublicState } from './game/types'
 import { GameTable } from './components/GameTable'
 
-const BOT_DELAY_MS = 450
+const BOT_DELAY_MS = 620
 
 function useGame() {
   const gameRef = useRef(new SchafkopfGame())
@@ -23,14 +23,12 @@ function useGame() {
       }
     }, BOT_DELAY_MS)
     return () => window.clearTimeout(id)
-  }, [botNonce, state.phase, state.whoseTurn, state.currentBidder])
+  }, [botNonce, state.phase, state.whoseTurn, state.currentBidder, state.awaitingContinue])
 
   const api = useMemo(
     () => ({
       newHand: () => {
-        // Instantly resolve bidding bots; card play uses delayed stepBot
         gameRef.current.startHand()
-        // After startHand autoPlay may finish bidding instantly — ok for bidding
         sync()
       },
       bid: (bid: Bid) => {
@@ -39,6 +37,10 @@ function useGame() {
       },
       play: (card: CardId) => {
         gameRef.current.humanPlay(card)
+        sync()
+      },
+      continueTrick: () => {
+        gameRef.current.acknowledgeTrick()
         sync()
       },
       legal: () => gameRef.current.legalForHuman(),
@@ -50,7 +52,7 @@ function useGame() {
 }
 
 export default function App() {
-  const { state, newHand, bid, play, legal } = useGame()
+  const { state, newHand, bid, play, continueTrick, legal } = useGame()
 
   return (
     <GameTable
@@ -59,6 +61,7 @@ export default function App() {
       onBid={bid}
       onPlay={play}
       onNewHand={newHand}
+      onContinue={continueTrick}
     />
   )
 }

@@ -38,6 +38,8 @@ export class SchafkopfGame {
   result: GameResult | null = null
   sessionScores: number[] = [0, 0, 0, 0]
   calledAcePlayed = false
+  awaitingContinue = false
+  logLines: string[] = []
   message = 'Bereit für eine neue Runde.'
   private passesInRow = 0
   private biddingOrder: PlayerId[] = []
@@ -67,6 +69,8 @@ export class SchafkopfGame {
       result: this.result,
       sessionScores: [...this.sessionScores],
       calledAcePlayed: this.calledAcePlayed,
+      awaitingContinue: this.awaitingContinue,
+      logLines: [...this.logLines],
       message: this.message,
     }
   }
@@ -99,6 +103,7 @@ export class SchafkopfGame {
     this.finishedTricks = []
     this.result = null
     this.calledAcePlayed = false
+    this.awaitingContinue = false
     this.passesInRow = 0
     this.phase = 'bidding'
 
@@ -109,6 +114,7 @@ export class SchafkopfGame {
     this.whoseTurn = this.currentBidder
     this.trickLeader = forehand
     this.message = turnToBidMessage(this.currentBidder, this.highestBid)
+    this.pushLog('Neue Karten gegeben.')
   }
 
   humanBid(bid: Bid): PublicState {
@@ -117,6 +123,20 @@ export class SchafkopfGame {
     }
     this.applyBid(HUMAN, bid)
     this.autoPlayBids()
+    return this.getState()
+  }
+
+  acknowledgeTrick(): PublicState {
+    if (!this.awaitingContinue) return this.getState()
+    this.awaitingContinue = false
+    this.currentTrick = []
+    if (this.finishedTricks.length === 8) {
+      this.finishGame()
+      return this.getState()
+    }
+    this.whoseTurn = this.trickLeader
+    this.message =
+      this.trickLeader === 0 ? 'Du kommst raus.' : `${PLAYER_NAMES[this.trickLeader]} kommt raus.`
     return this.getState()
   }
 
@@ -133,6 +153,7 @@ export class SchafkopfGame {
   }
 
   legalForHuman(): CardId[] {
+    if (this.awaitingContinue) return []
     if (this.phase !== 'playing' || this.whoseTurn !== HUMAN || !this.contract) return []
     return legalMoves(this.hands[HUMAN], this.contract, this.currentTrick, this.calledAcePlayed)
   }
@@ -149,8 +170,8 @@ export class SchafkopfGame {
       const who = player === 0 ? 'Du' : PLAYER_NAMES[player]
       this.message = `${who}: ${formatBid(bid)}`
     }
+    this.pushLog(this.message)
 
-    // Bidding ends when everyone passed once after a bid, or all four passed
     const allPassed = PLAYERS.every((p) => this.bids[p]?.kind === 'pass')
     const everyoneActed = PLAYERS.every((p) => this.bids[p])
     const threePassesAfterBid = this.highestBid && this.passesInRow >= 3
@@ -166,24 +187,19 @@ export class SchafkopfGame {
       return
     }
 
-    // Continue around table; allow overbids in further seats
     this.biddingIndex += 1
-    // Keep going until resolved; players who already passed can be skipped except for overbid rounds
     let guard = 0
     while (guard < 8) {
       const next = this.biddingOrder[this.biddingIndex % 4]
       this.biddingIndex += 1
       guard += 1
-      // Skip players who passed unless nobody has a bid yet
       if (this.bids[next]?.kind === 'pass' && this.highestBid) continue
-      // If player already made the winning bid and others are passing, handled above
       if (next === this.highestBidder && this.highestBid) continue
       this.currentBidder = next
       this.whoseTurn = next
       this.message = turnToBidMessage(next, this.highestBid)
       return
     }
-    // Fallback
     if (this.highestBid && this.highestBidder !== null) {
       this.startPlaying(this.highestBidder, this.highestBid)
     }
@@ -199,6 +215,7 @@ export class SchafkopfGame {
     this.currentTrick = []
     this.finishedTricks = []
     this.calledAcePlayed = false
+    this.awaitingContinue = false
     for (const p of PLAYERS) {
       this.hands[p] = sortHand(this.hands[p], this.contract)
     }
@@ -206,6 +223,7 @@ export class SchafkopfGame {
       forehand === 0
         ? `${formatContract(this.contract)} — Du kommst raus.`
         : `${formatContract(this.contract)} — ${PLAYER_NAMES[forehand]} kommt raus.`
+    this.pushLog(formatContract(this.contract))
   }
 
   private playCard(player: PlayerId, card: CardId) {
@@ -213,6 +231,7 @@ export class SchafkopfGame {
     this.currentTrick.push({ player, card })
     this.message =
       player === 0 ? `Du spielst ${cardLabel(card)}.` : `${PLAYER_NAMES[player]} spielt ${cardLabel(card)}.`
+    this.pushLog(this.message)
 
     if (this.contract?.kind === 'rufspiel' && card === this.contract.calledAce) {
       this.calledAcePlayed = true
@@ -224,7 +243,6 @@ export class SchafkopfGame {
       return
     }
 
-    // Trick complete
     const winner = trickWinner(this.currentTrick, this.contract!) as PlayerId
     const points = this.currentTrick.reduce((s, t) => s + cardPoints(t.card), 0)
     this.finishedTricks.push({
@@ -234,13 +252,10 @@ export class SchafkopfGame {
     })
     this.message =
       winner === 0 ? `Du stichst (${points} Augen).` : `${PLAYER_NAMES[winner]} sticht (${points} Augen).`
-    this.currentTrick = []
+    this.pushLog(this.message)
     this.trickLeader = winner
-    this.whoseTurn = winner
-
-    if (this.finishedTricks.length === 8) {
-      this.finishGame()
-    }
+    this.whoseTurn = null
+    this.awaitingContinue = true
   }
 
   private finishGame() {
@@ -251,6 +266,11 @@ export class SchafkopfGame {
       this.sessionScores[player] += delta
     }
     this.message = this.result.message
+    this.pushLog(this.result.message)
+  }
+
+  private pushLog(line: string) {
+    this.logLines = [...this.logLines, line].slice(-24)
   }
 
   /** Resolve bot bids quickly; card play is stepped from the UI with delay. */
@@ -268,6 +288,7 @@ export class SchafkopfGame {
 
   /** One bot card (or leftover bid). Returns false when human must act or idle/finished. */
   stepBot(): boolean {
+    if (this.awaitingContinue) return false
     if (this.phase === 'bidding' && this.currentBidder !== null && this.currentBidder !== HUMAN) {
       const bid = chooseBid(this.hands[this.currentBidder], this.highestBid)
       this.applyBid(this.currentBidder, bid)
@@ -289,6 +310,7 @@ export class SchafkopfGame {
   }
 
   needsBot(): boolean {
+    if (this.awaitingContinue) return false
     if (this.phase === 'bidding' && this.currentBidder !== null && this.currentBidder !== HUMAN) return true
     if (this.phase === 'playing' && this.whoseTurn !== null && this.whoseTurn !== HUMAN) return true
     return false
@@ -313,7 +335,7 @@ function formatContract(contract: Contract): string {
   if (contract.kind === 'solo') {
     return `${SUIT_NAMES[contract.color]}-Solo von ${PLAYER_NAMES[contract.caller]}`
   }
-  return `Rufspiel (${SUIT_NAMES[contract.color]}) von ${PLAYER_NAMES[contract.caller]} mit ${PLAYER_NAMES[contract.partner]}`
+  return `Rufspiel ${SUIT_NAMES[contract.color]} von ${PLAYER_NAMES[contract.caller]} mit ${PLAYER_NAMES[contract.partner]}`
 }
 
 export { formatBid, formatContract }

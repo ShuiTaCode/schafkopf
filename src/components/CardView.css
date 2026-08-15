@@ -1,105 +1,65 @@
 .sk-card {
-  --card-w: 72px;
-  --card-h: 108px;
+  --card-w: 84px;
+  --card-h: 146px;
+  --fan: 0deg;
+  --sx: 0;
+  --sy: 0;
+  --cw: 372;
+  --ch: 649;
+  --sw: 4440;
+  --sh: 2776;
   width: var(--card-w);
   height: var(--card-h);
+  padding: 0;
+  border: none;
+  background: transparent;
   border-radius: 10px;
-  border: 1px solid rgba(40, 28, 16, 0.35);
-  background: linear-gradient(160deg, #fff8e8 0%, #f3e6c8 100%);
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.28);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.45rem 0.3rem 0.4rem;
-  cursor: pointer;
-  font-family: inherit;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-  color: #1c140c;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.38);
+  cursor: default;
+  transform: rotate(var(--fan)) translateY(0);
+  transform-origin: 50% 100%;
+  transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
   position: relative;
+  overflow: hidden;
+}
+
+.sk-card-face {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-image: url('/deck.webp');
+  background-repeat: no-repeat;
+  background-size: calc(var(--sw) / var(--cw) * var(--card-w)) calc(var(--sh) / var(--ch) * var(--card-h));
+  background-position: calc(-1 * var(--sx) / var(--cw) * var(--card-w))
+    calc(-1 * var(--sy) / var(--ch) * var(--card-h));
+}
+
+.sk-card svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
 }
 
 .sk-card.compact {
-  --card-w: 56px;
-  --card-h: 84px;
-  padding: 0.3rem 0.2rem;
+  --card-w: 60px;
+  --card-h: 105px;
 }
 
-.sk-card:not(:disabled).is-interactive:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.35);
+.sk-card.is-interactive {
+  cursor: pointer;
+}
+
+.sk-card.is-interactive:hover,
+.sk-card.selected {
+  transform: rotate(var(--fan)) translateY(-14px);
+  box-shadow: 0 16px 24px rgba(0, 0, 0, 0.45);
+  z-index: 3;
 }
 
 .sk-card.is-disabled,
 .sk-card:disabled {
   cursor: default;
-  opacity: 0.45;
-  filter: grayscale(0.2);
-}
-
-.sk-card:not(.is-interactive) {
-  cursor: default;
-}
-
-.sk-card.selected {
-  transform: translateY(-14px);
-  outline: 2px solid #d4a017;
-  outline-offset: 2px;
-  opacity: 1;
-}
-
-.sk-card .rank {
-  font-family: 'Fraunces', Georgia, serif;
-  font-weight: 700;
-  font-size: 1.15rem;
-  line-height: 1;
-}
-
-.sk-card.compact .rank {
-  font-size: 0.95rem;
-}
-
-.sk-card .suit-sym {
-  font-size: 1.5rem;
-  line-height: 1;
-}
-
-.sk-card.compact .suit-sym {
-  font-size: 1.15rem;
-}
-
-.sk-card .suit-name {
-  font-size: 0.62rem;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  opacity: 0.85;
-}
-
-.sk-card.compact .suit-name {
-  font-size: 0.5rem;
-}
-
-.sk-card.suit-eichel {
-  color: #1a1a1a;
-}
-.sk-card.suit-gras {
-  color: #1f6b3a;
-}
-.sk-card.suit-herz {
-  color: #a11d2a;
-}
-.sk-card.suit-schell {
-  color: #b45309;
-}
-
-.sk-card.back {
-  background:
-    radial-gradient(circle at 30% 20%, rgba(255, 220, 120, 0.25), transparent 40%),
-    repeating-linear-gradient(
-      45deg,
-      #1f4d32 0 6px,
-      #163a26 6px 12px
-    );
-  border-color: rgba(0, 0, 0, 0.4);
-  cursor: default;
+  filter: grayscale(0.25) brightness(0.82);
+  opacity: 0.55;
 }

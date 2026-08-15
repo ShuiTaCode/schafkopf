@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { createDeck, cardPoints } from './deck'
-import { beats, isTrump, trickWinner, trumpOrder } from './ordering'
-import { canCallColor, legalMoves, callableColors } from './rules'
-import { scoreGame } from './scoring'
+import { SchafkopfGame } from './game'
+import { beats, isTrump, sortHand, trickWinner, trumpOrder } from './ordering'
+import { bidRank, canCallColor, legalMoves, callableColors } from './rules'
+import { runningAugen, scoreGame } from './scoring'
 import type { Contract, FinishedTrick } from './types'
 
 describe('deck', () => {
@@ -177,5 +178,76 @@ describe('scoring', () => {
     expect(result.seatDeltas[1].delta).toBeGreaterThan(0)
     expect(result.seatDeltas[2].delta).toBeGreaterThan(0)
     expect(result.seatDeltas[3].delta).toBeGreaterThan(0)
+  })
+
+  it('counts running Augen during the hand', () => {
+    const contract: Contract = { kind: 'solo', color: 'H', caller: 0 }
+    const tricks: FinishedTrick[] = [
+      {
+        cards: [
+          { player: 0, card: 'HA' },
+          { player: 1, card: 'H10' },
+          { player: 2, card: 'HK' },
+          { player: 3, card: 'H9' },
+        ],
+        winner: 0,
+        points: 25,
+      },
+      {
+        cards: [
+          { player: 1, card: 'EA' },
+          { player: 2, card: 'E10' },
+          { player: 3, card: 'EK' },
+          { player: 0, card: 'E9' },
+        ],
+        winner: 1,
+        points: 25,
+      },
+    ]
+    expect(runningAugen(contract, tricks)).toEqual({ playing: 25, defending: 25 })
+  })
+})
+
+describe('bidding rank', () => {
+  it('orders Rufspiel < Wenz < Solo', () => {
+    expect(bidRank({ kind: 'rufspiel', color: 'E' })).toBeLessThan(bidRank({ kind: 'wenz' }))
+    expect(bidRank({ kind: 'wenz' })).toBeLessThan(bidRank({ kind: 'solo', color: 'H' }))
+  })
+})
+
+describe('hand sort', () => {
+  it('groups trumps first even before a contract', () => {
+    const sorted = sortHand(['EA', 'G7', 'H8', 'SU', 'EO'], null)
+    expect(sorted.slice(0, 3)).toEqual(['EO', 'SU', 'H8'])
+  })
+})
+
+describe('trick continue', () => {
+  it('keeps the completed trick until acknowledged', () => {
+    const game = new SchafkopfGame()
+    game.phase = 'playing'
+    game.contract = {
+      kind: 'rufspiel',
+      color: 'E',
+      caller: 0,
+      partner: 1,
+      calledAce: 'EA',
+    }
+    game.calledAcePlayed = true
+    game.hands = { 0: ['H7'], 1: [], 2: [], 3: [] }
+    game.currentTrick = [
+      { player: 1, card: 'H8' },
+      { player: 2, card: 'H9' },
+      { player: 3, card: 'HK' },
+    ]
+    game.whoseTurn = 0
+    game.humanPlay('H7')
+    expect(game.awaitingContinue).toBe(true)
+    expect(game.currentTrick).toHaveLength(4)
+    expect(game.whoseTurn).toBeNull()
+    game.acknowledgeTrick()
+    expect(game.awaitingContinue).toBe(false)
+    expect(game.currentTrick).toHaveLength(0)
+    expect(game.whoseTurn).toBe(game.trickLeader)
   })
 })

@@ -1,6 +1,7 @@
 import { makeCard, parseCard } from './deck'
 import { effectiveColor } from './ordering'
 import type { Bid, CardId, Contract, Suit } from './types'
+import { SUIT_NAMES } from './types'
 
 export function hasPlainColor(hand: CardId[], color: Suit): boolean {
   // Without contract yet (bidding), O/U are not yet assigned as trump for color check of "callable"
@@ -22,11 +23,21 @@ export function callableColors(hand: CardId[]): Array<Exclude<Suit, 'H'>> {
   return (['E', 'G', 'S'] as const).filter((c) => canCallColor(hand, c))
 }
 
+/** Warum ein Rufspiel nicht geht — nur Anzeige, ändert die Regel nicht. */
+export function rufspielBlockReason(hand: CardId[], color: Exclude<Suit, 'H'>): string | null {
+  if (canCallColor(hand, color)) return null
+  if (hand.includes(makeCard(color, 'A'))) {
+    return `Du hast die ${SUIT_NAMES[color]}-Sau selbst.`
+  }
+  return `Keine ${SUIT_NAMES[color]}-Fehlkarte auf der Hand.`
+}
+
+/** Aufsteigend: Rufspiel < Wenz < Farbsolo (Schafkopfordnung). */
 export function bidRank(bid: Bid): number {
   if (bid.kind === 'pass') return 0
   if (bid.kind === 'rufspiel') return 1
-  if (bid.kind === 'solo') return 2
-  return 3 // wenz
+  if (bid.kind === 'wenz') return 2
+  return 3 // solo
 }
 
 export function canAnnounce(hand: CardId[], bid: Bid, current: Bid | null): boolean {

@@ -63,6 +63,8 @@ export interface PublicState {
   result: GameResult | null
   sessionScores: number[]
   calledAcePlayed: boolean
+  awaitingContinue: boolean
+  logLines: string[]
   message: string
 }
 
