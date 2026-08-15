@@ -1,5 +1,6 @@
 .room {
   min-height: 100svh;
+  height: 100%;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -141,7 +142,7 @@
   padding: 1rem 1.1rem 0.8rem;
   display: grid;
   grid-template-rows: auto 1fr auto;
-  min-height: 560px;
+  min-height: 520px;
 }
 
 .mid-row {
@@ -429,8 +430,80 @@
 }
 
 @media (max-width: 860px) {
+  html,
+  body,
+  #root {
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+  }
+
+  .room {
+    height: 100dvh;
+    max-height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  .bavaria-bar {
+    height: 5px;
+  }
+
+  .hud {
+    flex-wrap: nowrap;
+    gap: 0.35rem;
+    padding: 0.28rem 0.45rem 0.1rem;
+    align-items: center;
+  }
+
+  .brand-mark {
+    font-size: 1.05rem;
+  }
+
+  .brand-sub {
+    display: none;
+  }
+
+  .contract-banner {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+    font-size: 0.68rem;
+    padding: 0.18rem 0.45rem;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .augen-meter {
+    width: auto;
+    flex-shrink: 0;
+    padding: 0.12rem 0.4rem;
+    font-size: 0.72rem;
+    gap: 0.28rem;
+    border-radius: 8px;
+  }
+
+  .augen-meter strong {
+    font-size: 0.9rem;
+  }
+
+  .status-line {
+    margin: 0 0.45rem 0.2rem;
+    font-size: 0.7rem;
+    min-height: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .table-stage {
     grid-template-columns: 1fr;
+    padding: 0 0.3rem 0.3rem;
+    min-height: 0;
+    overflow: hidden;
   }
 
   .log-panel {
@@ -438,9 +511,11 @@
   }
 
   .wood-table {
-    border-radius: 28px;
+    border-radius: 16px;
     min-height: 0;
-    padding: 0.55rem 0.4rem 0.5rem;
+    height: 100%;
+    padding: 0.3rem 0.25rem 0.2rem;
+    overflow: hidden;
   }
 
   .desktop-only {
@@ -450,59 +525,149 @@
   .opponents-mobile {
     display: flex;
     justify-content: space-between;
-    gap: 0.25rem;
+    gap: 0.2rem;
+    flex-shrink: 0;
   }
 
   .opponents-mobile .seat {
     flex: 1;
     min-width: 0;
+    gap: 0.15rem;
   }
 
-  .opponents-mobile .bot-fan .sk-card {
-    --card-w: 28px;
-    --card-h: 49px;
-    margin-left: -18px;
+  .opponents-mobile .bot-fan {
+    display: none;
   }
 
   .mid-row {
     grid-template-columns: 1fr;
+    min-height: 0;
+    height: 100%;
   }
 
   .trick-area {
-    min-height: 210px;
+    min-height: 0;
+    height: 100%;
+    gap: 0;
+  }
+
+  .trick-area .sk-card {
+    --card-w: 44px;
+    --card-h: 77px;
+  }
+
+  .trick-slot {
+    min-height: 0;
+    font-size: 0.58rem;
+    gap: 0.05rem;
+  }
+
+  .empty-slot {
+    font-size: 0.55rem;
   }
 
   .hand {
-    min-height: 132px;
-    padding-bottom: 0.15rem;
+    min-height: 0;
+    padding: 0.1rem 0.1rem 0;
   }
 
   .hand .sk-card {
-    --card-w: 54px;
-    --card-h: 94px;
+    --card-w: 46px;
+    --card-h: 80px;
     margin-left: -18px;
+    border-radius: 7px;
+  }
+
+  .hand .sk-card.is-interactive:hover,
+  .hand .sk-card.selected {
+    transform: rotate(var(--fan)) translateY(-8px);
+  }
+
+  .south {
+    gap: 0.15rem;
+    flex-shrink: 0;
+    padding-bottom: 0.1rem;
+  }
+
+  .play-hint {
+    font-size: 0.68rem;
+    padding: 0.08rem 0.45rem;
   }
 
   .seat-badge {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: center;
-    font-size: 0.68rem;
-    padding: 0.18rem 0.35rem;
+    font-size: 0.62rem;
+    padding: 0.12rem 0.28rem;
+    gap: 0.22rem;
+    max-width: 100%;
   }
 
-  .hud {
-    padding: 0.45rem 0.6rem 0.2rem;
+  .seat-badge .avatar {
+    width: 18px;
+    height: 18px;
+    font-size: 0.62rem;
   }
 
-  .contract-banner {
+  .seat-badge .pts {
+    font-size: 0.58rem;
+  }
+
+  .turn-dot,
+  .role-pill {
+    font-size: 0.5rem;
+    padding: 0.04rem 0.28rem;
+  }
+
+  .bidding-bar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 7;
+    padding: 0.4rem 0.4rem calc(0.45rem + env(safe-area-inset-bottom, 0));
+  }
+
+  .room:has(.bidding-bar) .south {
+    padding-bottom: 5.4rem;
+  }
+
+  .bidding-bar p {
     font-size: 0.78rem;
-    width: 100%;
-    text-align: center;
+    margin-bottom: 0.3rem;
   }
 
-  .augen-meter {
-    width: 100%;
-    justify-content: center;
+  .bid-actions {
+    gap: 0.28rem;
+  }
+
+  .bid-btn,
+  .primary-btn {
+    padding: 0.38rem 0.55rem;
+    font-size: 0.72rem;
+  }
+
+  .continue-btn {
+    padding: 0.4rem 0.7rem;
+    font-size: 0.8rem;
+  }
+
+  .result-panel {
+    padding: 0.7rem 0.75rem;
+    max-width: 94%;
+    font-size: 0.85rem;
+  }
+
+  .start-overlay {
+    padding: 1rem;
+  }
+
+  .start-overlay h1 {
+    font-size: clamp(2.2rem, 12vw, 3.2rem);
+  }
+
+  .start-overlay p {
+    font-size: 0.88rem;
   }
 }
 

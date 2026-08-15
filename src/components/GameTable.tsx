@@ -178,7 +178,7 @@ export function GameTable({ state, legal, onBid, onPlay, onNewHand, onContinue }
 
 function fanDeg(index: number, total: number): number {
   if (total <= 1) return 0
-  const spread = Math.min(28, total * 3.2)
+  const spread = Math.min(22, total * 2.6)
   const t = index / (total - 1)
   return -spread / 2 + t * spread
 }
