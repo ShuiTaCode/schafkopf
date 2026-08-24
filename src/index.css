@@ -40,23 +40,6 @@ body {
     env(safe-area-inset-left, 0px);
 }
 
-/* Hochkant: Spielfeld schon quer zeichnen — auch wenn Auto-Drehen gesperrt ist */
-@media (orientation: portrait) and (max-width: 900px) {
-  body {
-    padding: 0;
-  }
-
-  #root {
-    position: fixed;
-    top: 0;
-    left: 100%;
-    width: 100dvh;
-    height: 100dvw;
-    transform: rotate(90deg);
-    transform-origin: top left;
-  }
-}
-
 html:fullscreen,
 body:fullscreen {
   background: #1a1208;

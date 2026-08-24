@@ -37,7 +37,12 @@ export function GameTable({ state, scene, legal, onBid, onPlay, onNewHand, onCon
   const hint = playHint(state, legal, isHumanPlay)
 
   return (
-    <div className="room">
+    <>
+      <div className="landscape-gate" role="dialog" aria-label="Querformat nötig">
+        <p className="landscape-gate-title">Schafkopf</p>
+        <p>Handy quer drehen.</p>
+      </div>
+      <div className="room">
         <header className="hud">
           <div className="brand-block">
             <p className="brand-mark">Schafkopf</p>
@@ -164,6 +169,7 @@ export function GameTable({ state, scene, legal, onBid, onPlay, onNewHand, onCon
           </div>
         )}
       </div>
+    </>
   )
 }
 
