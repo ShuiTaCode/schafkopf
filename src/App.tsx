@@ -60,6 +60,20 @@ function useGame() {
 export default function App() {
   const { state, scene, newHand, bid, play, continueTrick, legal } = useGame()
 
+  useEffect(() => {
+    const lockLandscape = () => {
+      const orientation = screen.orientation
+      if (orientation && typeof orientation.lock === 'function') {
+        void orientation.lock('landscape').catch(() => {
+          /* Browser oder Auto-Rotate-Sperre — CSS dreht dann selbst */
+        })
+      }
+    }
+    lockLandscape()
+    window.addEventListener('pointerdown', lockLandscape)
+    return () => window.removeEventListener('pointerdown', lockLandscape)
+  }, [])
+
   return (
     <GameTable
       state={state}

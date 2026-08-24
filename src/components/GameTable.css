@@ -1,7 +1,3 @@
-.landscape-gate {
-  display: none;
-}
-
 .room {
   min-height: 100svh;
   height: 100%;
@@ -549,42 +545,20 @@
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
 }
 
-/* Portrait phones: force landscape */
+/* Portrait: kein Hinweis-Screen — das Spielfeld liegt schon quer. */
 @media (orientation: portrait) and (max-width: 900px) {
   .room {
-    display: none;
-  }
-
-  .landscape-gate {
-    display: grid;
-    place-content: center;
-    gap: 0.6rem;
-    min-height: 100svh;
-    padding: 2rem;
-    text-align: center;
-    background:
-      radial-gradient(ellipse at 50% 30%, rgba(40, 70, 40, 0.35), transparent 55%),
-      #123224;
-    color: #f4e4bc;
-  }
-
-  .landscape-gate-title {
-    margin: 0;
-    font-family: 'Fraunces', Georgia, serif;
-    font-size: 2.4rem;
-  }
-
-  .landscape-gate p {
-    margin: 0;
-    opacity: 0.9;
+    min-height: 100%;
+    height: 100%;
   }
 }
 
 /*
- * Handy Querformat — Orientierung am klassischen Schafkopf-Mobile:
- * große, tippbare Hand (~30% Höhe), Szene oben, UI als Overlay.
+ * Handy Querformat — und dasselbe Layout, wenn das Hochkant-Gerät
+ * das Spielfeld per CSS um 90° dreht (Auto-Rotate aus).
  */
-@media (orientation: landscape) and (max-height: 560px) {
+@media (orientation: landscape) and (max-height: 560px),
+  (orientation: portrait) and (max-width: 900px) {
   .hud {
     flex-wrap: nowrap;
     gap: 0.3rem 0.5rem;
@@ -606,7 +580,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 38vw;
+    max-width: 38cqw;
   }
 
   .augen-meter {
@@ -673,7 +647,7 @@
   .trick-area {
     top: 40%;
     min-height: 96px;
-    width: min(128px, 26vw);
+    width: min(128px, 26cqw);
     gap: 0;
   }
 
@@ -727,7 +701,7 @@
   .play-hint {
     font-size: 0.68rem;
     padding: 0.12rem 0.55rem;
-    max-width: 78vw;
+    max-width: 78cqw;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -735,10 +709,10 @@
 
   /* Nur die obere Kartenhälfte sichtbar — untere Hälfte hängt aus dem Screen */
   .hand {
-    width: min(92vw, 720px);
+    width: min(92cqw, 720px);
     min-height: 0;
     padding: 0;
-    margin-bottom: calc(-0.52 * clamp(108px, 42vh, 168px));
+    margin-bottom: calc(-0.52 * clamp(108px, 42cqh, 168px));
     border-radius: 0;
     background: none;
     border: none;
@@ -747,9 +721,9 @@
   }
 
   .hand .sk-card {
-    --card-w: clamp(56px, 10.5vw, 78px);
-    --card-h: clamp(108px, 42vh, 168px);
-    margin-left: clamp(-42px, -6.4vw, -28px);
+    --card-w: clamp(56px, 10.5cqw, 78px);
+    --card-h: clamp(108px, 42cqh, 168px);
+    margin-left: clamp(-42px, -6.4cqw, -28px);
     border-radius: 8px;
   }
 
@@ -764,7 +738,7 @@
 
   .primary-btn.continue-btn {
     bottom: calc(5.4rem + env(safe-area-inset-bottom, 0px));
-    min-width: min(58vw, 15rem);
+    min-width: min(58cqw, 15rem);
     min-height: 2.45rem;
     padding: 0.55rem 1.4rem;
     font-size: 1rem;
@@ -812,9 +786,9 @@
   }
 
   .room:has(.bidding-bar) .hand .sk-card {
-    --card-w: clamp(48px, 9vw, 68px);
-    --card-h: clamp(88px, 28vh, 120px);
-    margin-left: clamp(-36px, -5.6vw, -22px);
+    --card-w: clamp(48px, 9cqw, 68px);
+    --card-h: clamp(88px, 28cqh, 120px);
+    margin-left: clamp(-36px, -5.6cqw, -22px);
   }
 
   .room:has(.bidding-bar) .south {
@@ -832,7 +806,7 @@
   }
 
   .start-overlay h1 {
-    font-size: clamp(1.6rem, 7vw, 2.3rem);
+    font-size: clamp(1.6rem, 7cqw, 2.3rem);
   }
 
   .start-overlay p {
