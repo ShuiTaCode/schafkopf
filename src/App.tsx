@@ -3,6 +3,7 @@ import { SchafkopfGame } from './game/game'
 import type { Bid, CardId, PublicState } from './game/types'
 import { GameTable } from './components/GameTable'
 import { namesFromScene, pickScene, type SceneDef } from './theme/scenes'
+import { enableImmersivePlay } from './pwa'
 
 const BOT_DELAY_MS = 620
 
@@ -60,19 +61,7 @@ function useGame() {
 export default function App() {
   const { state, scene, newHand, bid, play, continueTrick, legal } = useGame()
 
-  useEffect(() => {
-    const lockLandscape = () => {
-      const orientation = screen.orientation
-      if (orientation && typeof orientation.lock === 'function') {
-        void orientation.lock('landscape').catch(() => {
-          /* Browser oder Auto-Rotate-Sperre — CSS dreht dann selbst */
-        })
-      }
-    }
-    lockLandscape()
-    window.addEventListener('pointerdown', lockLandscape)
-    return () => window.removeEventListener('pointerdown', lockLandscape)
-  }, [])
+  useEffect(() => enableImmersivePlay(), [])
 
   return (
     <GameTable

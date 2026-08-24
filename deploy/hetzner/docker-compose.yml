@@ -16,6 +16,13 @@ services:
       traefik.http.routers.schafkopf.tls.certresolver: letsencrypt
       traefik.http.routers.schafkopf.middlewares: authentik@file,security-headers@file
       traefik.http.services.schafkopf.loadbalancer.server.port: "80"
+      # Chrome holt Manifest/Icons ohne Login-Cookie — sonst kein echtes WebAPK/Fullscreen
+      traefik.http.routers.schafkopf-pwa.rule: Host(`${SCHAFKOPF_HOST:-schafkopf.shui-ta.com}`) && (Path(`/manifest.webmanifest`) || PathPrefix(`/icons/`) || Path(`/favicon.svg`))
+      traefik.http.routers.schafkopf-pwa.entrypoints: websecure
+      traefik.http.routers.schafkopf-pwa.tls.certresolver: letsencrypt
+      traefik.http.routers.schafkopf-pwa.priority: "200"
+      traefik.http.routers.schafkopf-pwa.middlewares: security-headers@file
+      traefik.http.routers.schafkopf-pwa.service: schafkopf
     logging:
       driver: json-file
       options:

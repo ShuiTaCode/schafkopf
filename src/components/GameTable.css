@@ -252,10 +252,10 @@
 .trick-area {
   position: absolute;
   left: 50%;
-  top: 48%;
+  top: 44%;
   transform: translate(-50%, -50%);
-  width: min(168px, 28vw);
-  min-height: 132px;
+  width: min(280px, 42vw);
+  min-height: 200px;
   display: grid;
   grid-template-areas:
     '. north .'
@@ -267,6 +267,11 @@
   align-items: center;
   gap: 0;
   z-index: 2;
+}
+
+.trick-area .sk-card {
+  --card-w: 72px;
+  --card-h: 126px;
 }
 
 .trick-slot {
@@ -282,25 +287,25 @@
 
 .trick-slot.north {
   grid-area: north;
-  transform: translateY(28px);
+  transform: translateY(46px);
   z-index: 2;
 }
 
 .trick-slot.west {
   grid-area: west;
-  transform: translateX(22px) rotate(-14deg);
+  transform: translateX(38px) rotate(-16deg);
   z-index: 3;
 }
 
 .trick-slot.east {
   grid-area: east;
-  transform: translateX(-22px) rotate(14deg);
+  transform: translateX(-38px) rotate(16deg);
   z-index: 3;
 }
 
 .trick-slot.south {
   grid-area: south;
-  transform: translateY(-26px);
+  transform: translateY(-42px);
   z-index: 4;
 }
 
@@ -645,15 +650,15 @@
   }
 
   .trick-area {
-    top: 40%;
-    min-height: 96px;
-    width: min(128px, 26cqw);
+    top: 38%;
+    min-height: 150px;
+    width: min(52cqw, 260px);
     gap: 0;
   }
 
   .trick-area .sk-card {
-    --card-w: 42px;
-    --card-h: 72px;
+    --card-w: clamp(56px, 10.5cqw, 78px);
+    --card-h: clamp(108px, 42cqh, 168px);
   }
 
   .trick-slot {
@@ -663,19 +668,19 @@
   }
 
   .trick-slot.north {
-    transform: translateY(22px);
+    transform: translateY(52px);
   }
 
   .trick-slot.west {
-    transform: translateX(18px) rotate(-12deg);
+    transform: translateX(40px) rotate(-16deg);
   }
 
   .trick-slot.east {
-    transform: translateX(-18px) rotate(12deg);
+    transform: translateX(-40px) rotate(16deg);
   }
 
   .trick-slot.south {
-    transform: translateY(-20px);
+    transform: translateY(-48px);
   }
 
   .trick-slot:not(.filled) {
