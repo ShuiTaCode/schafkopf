@@ -256,10 +256,10 @@
 .trick-area {
   position: absolute;
   left: 50%;
-  top: 52%;
+  top: 48%;
   transform: translate(-50%, -50%);
-  width: min(420px, 52vw);
-  min-height: 210px;
+  width: min(168px, 28vw);
+  min-height: 132px;
   display: grid;
   grid-template-areas:
     '. north .'
@@ -269,7 +269,7 @@
   grid-template-rows: auto 1fr auto;
   justify-items: center;
   align-items: center;
-  gap: 0.15rem 0.35rem;
+  gap: 0;
   z-index: 2;
 }
 
@@ -284,10 +284,29 @@
   min-height: 88px;
 }
 
-.trick-slot.north { grid-area: north; }
-.trick-slot.west { grid-area: west; }
-.trick-slot.east { grid-area: east; }
-.trick-slot.south { grid-area: south; }
+.trick-slot.north {
+  grid-area: north;
+  transform: translateY(28px);
+  z-index: 2;
+}
+
+.trick-slot.west {
+  grid-area: west;
+  transform: translateX(22px) rotate(-14deg);
+  z-index: 3;
+}
+
+.trick-slot.east {
+  grid-area: east;
+  transform: translateX(-22px) rotate(14deg);
+  z-index: 3;
+}
+
+.trick-slot.south {
+  grid-area: south;
+  transform: translateY(-26px);
+  z-index: 4;
+}
 
 .trick-slot.winner .sk-card {
   outline: 2px solid #ffe08a;
@@ -652,21 +671,37 @@
   }
 
   .trick-area {
-    top: 36%;
-    min-height: 0;
-    width: min(240px, 36vw);
+    top: 40%;
+    min-height: 96px;
+    width: min(128px, 26vw);
     gap: 0;
   }
 
   .trick-area .sk-card {
-    --card-w: 36px;
-    --card-h: 62px;
+    --card-w: 42px;
+    --card-h: 72px;
   }
 
   .trick-slot {
     min-height: 0;
     font-size: 0.5rem;
     gap: 0;
+  }
+
+  .trick-slot.north {
+    transform: translateY(22px);
+  }
+
+  .trick-slot.west {
+    transform: translateX(18px) rotate(-12deg);
+  }
+
+  .trick-slot.east {
+    transform: translateX(-18px) rotate(12deg);
+  }
+
+  .trick-slot.south {
+    transform: translateY(-20px);
   }
 
   .trick-slot:not(.filled) {
@@ -680,8 +715,8 @@
   }
 
   .south {
-    gap: 0.15rem;
-    padding: 0 0.35rem calc(0.15rem + env(safe-area-inset-bottom, 0px));
+    gap: 0.12rem;
+    padding: 0 0.35rem 0;
   }
 
   .south > .seat-badge {
@@ -698,21 +733,23 @@
     text-overflow: ellipsis;
   }
 
-  /* Große Hand wie Referenzspiel — Tisch darf unten überdeckt werden */
+  /* Nur die obere Kartenhälfte sichtbar — untere Hälfte hängt aus dem Screen */
   .hand {
-    width: min(98vw, 860px);
+    width: min(92vw, 720px);
     min-height: 0;
-    padding: 0.15rem 0.2rem 0.25rem;
-    border-radius: 14px;
-    background: linear-gradient(180deg, transparent, rgba(8, 6, 4, 0.45) 35%);
+    padding: 0;
+    margin-bottom: calc(-0.52 * clamp(108px, 42vh, 168px));
+    border-radius: 0;
+    background: none;
     border: none;
     box-shadow: none;
+    overflow: visible;
   }
 
   .hand .sk-card {
-    --card-w: clamp(58px, 11.5vw, 92px);
-    --card-h: clamp(102px, 32vh, 158px);
-    margin-left: clamp(-28px, -3.2vw, -16px);
+    --card-w: clamp(56px, 10.5vw, 78px);
+    --card-h: clamp(108px, 42vh, 168px);
+    margin-left: clamp(-42px, -6.4vw, -28px);
     border-radius: 8px;
   }
 
@@ -722,11 +759,11 @@
 
   .hand .sk-card.is-interactive:hover,
   .hand .sk-card.selected {
-    transform: rotate(var(--fan)) translateY(-10px);
+    transform: rotate(var(--fan)) translateY(-18px);
   }
 
   .primary-btn.continue-btn {
-    bottom: calc(8.2rem + env(safe-area-inset-bottom, 0px));
+    bottom: calc(5.4rem + env(safe-area-inset-bottom, 0px));
     min-width: min(58vw, 15rem);
     min-height: 2.45rem;
     padding: 0.55rem 1.4rem;
@@ -769,15 +806,19 @@
     opacity: 0.38;
   }
 
-  /* Beim Sagen Hand etwas kleiner, aber weiter tippbar */
+  /* Beim Sagen Hand über der Leiste, nicht unter den Rand schieben */
+  .room:has(.bidding-bar) .hand {
+    margin-bottom: 0;
+  }
+
   .room:has(.bidding-bar) .hand .sk-card {
-    --card-w: clamp(48px, 9.5vw, 72px);
-    --card-h: clamp(84px, 24vh, 120px);
-    margin-left: clamp(-22px, -2.6vw, -12px);
+    --card-w: clamp(48px, 9vw, 68px);
+    --card-h: clamp(88px, 28vh, 120px);
+    margin-left: clamp(-36px, -5.6vw, -22px);
   }
 
   .room:has(.bidding-bar) .south {
-    padding-bottom: calc(5.4rem + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(5.2rem + env(safe-area-inset-bottom, 0px));
   }
 
   .result-panel {

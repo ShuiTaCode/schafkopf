@@ -37,6 +37,7 @@ body {
     env(safe-area-inset-left, 0px);
 }
 
-button {
-  font: inherit;
+html:fullscreen,
+body:fullscreen {
+  background: #1a1208;
 }

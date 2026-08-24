@@ -3,7 +3,6 @@ import { SchafkopfGame } from './game/game'
 import type { Bid, CardId, PublicState } from './game/types'
 import { GameTable } from './components/GameTable'
 import { namesFromScene, pickScene, type SceneDef } from './theme/scenes'
-import { enableImmersivePwa } from './pwa'
 
 const BOT_DELAY_MS = 620
 
@@ -14,7 +13,7 @@ function useGame() {
     gameRef.current.setPlayerNames(namesFromScene(sceneRef.current))
     return gameRef.current.getState()
   })
-  const [scene, setScene] = useState<SceneDef>(() => sceneRef.current)
+  const [scene] = useState<SceneDef>(() => sceneRef.current)
   const [botNonce, setBotNonce] = useState(0)
 
   const sync = () => {
@@ -35,10 +34,6 @@ function useGame() {
   const api = useMemo(
     () => ({
       newHand: () => {
-        const next = pickScene(sceneRef.current.id)
-        sceneRef.current = next
-        setScene(next)
-        gameRef.current.setPlayerNames(namesFromScene(next))
         gameRef.current.startHand()
         sync()
       },
@@ -64,8 +59,6 @@ function useGame() {
 
 export default function App() {
   const { state, scene, newHand, bid, play, continueTrick, legal } = useGame()
-
-  useEffect(() => enableImmersivePwa(), [])
 
   return (
     <GameTable
