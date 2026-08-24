@@ -1,14 +1,16 @@
 import { CardView } from './CardView'
 import type { Bid, CardId, Contract, PlayerId, PublicState } from '../game/types'
-import { PLAYER_NAMES, SUIT_NAMES } from '../game/types'
+import { SUIT_NAMES } from '../game/types'
 import { canAnnounce, playingTeam, rufspielBlockReason } from '../game/rules'
 import { effectiveColor } from '../game/ordering'
-import { formatContract } from '../game/game'
+import { formatBid, formatContract } from '../game/game'
 import { runningAugen } from '../game/scoring'
+import { opponentLabel, type SceneDef } from '../theme/scenes'
 import './GameTable.css'
 
 interface Props {
   state: PublicState
+  scene: SceneDef
   legal: CardId[]
   onBid: (bid: Bid) => void
   onPlay: (card: CardId) => void
@@ -23,7 +25,10 @@ const SEAT_POS: Record<PlayerId, 'south' | 'west' | 'north' | 'east'> = {
   3: 'east',
 }
 
-export function GameTable({ state, legal, onBid, onPlay, onNewHand, onContinue }: Props) {
+const OPPONENTS = [1, 2, 3] as const
+
+export function GameTable({ state, scene, legal, onBid, onPlay, onNewHand, onContinue }: Props) {
+  const names = state.playerNames
   const humanHand = state.hands[0]
   const isHumanBid = state.phase === 'bidding' && state.currentBidder === 0
   const isHumanPlay = state.phase === 'playing' && state.whoseTurn === 0 && !state.awaitingContinue
@@ -32,66 +37,64 @@ export function GameTable({ state, legal, onBid, onPlay, onNewHand, onContinue }
   const hint = playHint(state, legal, isHumanPlay)
 
   return (
-    <div className="room">
-      <div className="bavaria-bar" aria-hidden />
+    <>
+      <div className="landscape-gate" role="dialog" aria-label="Querformat nötig">
+        <p className="landscape-gate-title">Schafkopf</p>
+        <p>Bitte das Handy quer halten.</p>
+      </div>
 
-      <header className="hud">
-        <div className="brand-block">
-          <p className="brand-mark">Schafkopf</p>
-          <p className="brand-sub">Bayerisch · gegen Sepp, Hias und Wastl</p>
-        </div>
-        {state.contract && (
-          <p className="contract-banner">{formatContract(state.contract)}</p>
-        )}
-        {augen && state.phase !== 'idle' && (
-          <div className="augen-meter" aria-label="Augen im laufenden Spiel">
-            <span>
-              Spieler <strong>{augen.playing}</strong>
-            </span>
-            <span className="augen-sep">:</span>
-            <span>
-              Gegner <strong>{augen.defending}</strong>
-            </span>
+      <div className="room">
+        <header className="hud">
+          <div className="brand-block">
+            <p className="brand-mark">Schafkopf</p>
+            {state.phase === 'idle' ? (
+              <p className="brand-sub">Bayerisch · quer halten</p>
+            ) : (
+              <p className="brand-sub">gegen {opponentLabel(scene)}</p>
+            )}
           </div>
-        )}
-      </header>
+          {state.contract && (
+            <p className="contract-banner">{formatContract(state.contract, names)}</p>
+          )}
+          {augen && state.phase !== 'idle' && (
+            <div className="augen-meter" aria-label="Augen im laufenden Spiel">
+              <span>
+                Spieler <strong>{augen.playing}</strong>
+              </span>
+              <span className="augen-sep">:</span>
+              <span>
+                Gegner <strong>{augen.defending}</strong>
+              </span>
+            </div>
+          )}
+        </header>
 
-      <p className="status-line" role="status">
-        {state.message}
-      </p>
+        <p className="status-line" role="status">
+          {state.message}
+        </p>
 
-      <div className="table-stage">
-        <aside className="log-panel" aria-label="Spielverlauf">
-          <h2>Verlauf</h2>
-          <ol>
-            {state.logLines.length === 0 && <li>Noch nichts gespielt.</li>}
-            {state.logLines.map((line, i) => (
-              <li key={`${i}-${line}`}>{line}</li>
+        <div className="scene-stage">
+          <div className="scene-fit">
+            <img className="scene-photo" src={scene.src} alt="" draggable={false} />
+            {OPPONENTS.map((player) => (
+              <OpponentHud
+                key={player}
+                player={player}
+                seat={scene.seats[player]}
+                state={state}
+                team={team}
+                names={names}
+              />
             ))}
-          </ol>
-        </aside>
-
-        <div className="wood-table">
-          <div className="opponents-mobile">
-            <Seat player={1} state={state} team={team} compact />
-            <Seat player={2} state={state} team={team} compact />
-            <Seat player={3} state={state} team={team} compact />
-          </div>
-
-          <Seat player={2} state={state} team={team} className="seat-north desktop-only" />
-
-          <div className="mid-row">
-            <Seat player={1} state={state} team={team} className="seat-west desktop-only" />
 
             <div className="trick-area">
-              {state.phase === 'playing' && state.currentTrick.length === 0 && !state.awaitingContinue && (
-                <p className="trick-hint">Stich</p>
-              )}
+              {state.phase === 'playing' &&
+                state.currentTrick.length === 0 &&
+                !state.awaitingContinue && <p className="trick-hint">Stich</p>}
               {([2, 1, 3, 0] as PlayerId[]).map((player) => {
                 const played = state.currentTrick.find((t) => t.player === player)
                 const winner =
-                  state.awaitingContinue &&
-                  state.finishedTricks.at(-1)?.winner === player
+                  state.awaitingContinue && state.finishedTricks.at(-1)?.winner === player
                 return (
                   <div
                     key={player}
@@ -100,32 +103,21 @@ export function GameTable({ state, legal, onBid, onPlay, onNewHand, onContinue }
                     {played ? (
                       <>
                         <CardView card={played.card} compact disabled />
-                        <span>{PLAYER_NAMES[player]}</span>
+                        <span>{names[player]}</span>
                       </>
                     ) : (
-                      <span className="empty-slot">{PLAYER_NAMES[player]}</span>
+                      <span className="empty-slot">{names[player]}</span>
                     )}
                   </div>
                 )
               })}
 
-              {state.awaitingContinue && (
-                <button type="button" className="primary-btn continue-btn" onClick={onContinue}>
-                  Weiter
-                </button>
-              )}
-
-              {state.phase === 'idle' && (
-                <button type="button" className="primary-btn" onClick={onNewHand}>
-                  Neue Runde
-                </button>
-              )}
-
               {state.phase === 'finished' && state.result && (
                 <div className="result-panel">
                   <p>{state.result.message}</p>
                   <p>
-                    Augen: Spieler {state.result.playingPoints} · Gegenpartei {state.result.defendingPoints}
+                    Augen: Spieler {state.result.playingPoints} · Gegenpartei{' '}
+                    {state.result.defendingPoints}
                   </p>
                   <button type="button" className="primary-btn" onClick={onNewHand}>
                     Nächste Runde
@@ -133,12 +125,16 @@ export function GameTable({ state, legal, onBid, onPlay, onNewHand, onContinue }
                 </div>
               )}
             </div>
-
-            <Seat player={3} state={state} team={team} className="seat-east desktop-only" />
           </div>
 
+          {state.awaitingContinue && (
+            <button type="button" className="primary-btn continue-btn" onClick={onContinue}>
+              Weiter
+            </button>
+          )}
+
           <div className="south">
-            <SeatBadge player={0} state={state} team={team} />
+            <SeatBadge player={0} state={state} team={team} names={names} />
             {hint && <p className="play-hint">{hint}</p>}
             <div className="hand">
               {humanHand.map((card, i) => {
@@ -157,23 +153,77 @@ export function GameTable({ state, legal, onBid, onPlay, onNewHand, onContinue }
             </div>
           </div>
         </div>
+
+        {isHumanBid && (
+          <BiddingBar hand={humanHand} current={state.highestBid} onBid={onBid} />
+        )}
+
+        {state.phase === 'idle' && (
+          <div className="start-overlay">
+            <h1>Schafkopf</h1>
+            <p>
+              Du spielst gegen {opponentLabel(scene)}. Rufspiel, Wenz und Solo — bayerisches Blatt.
+              Handy bitte quer halten.
+            </p>
+            <button type="button" className="primary-btn large" onClick={onNewHand}>
+              Geben
+            </button>
+          </div>
+        )}
       </div>
+    </>
+  )
+}
 
-      {isHumanBid && (
-        <BiddingBar hand={humanHand} current={state.highestBid} onBid={onBid} />
-      )}
-
-      {state.phase === 'idle' && (
-        <div className="start-overlay">
-          <h1>Schafkopf</h1>
-          <p>Du spielst gegen Sepp, Hias und Wastl. Rufspiel, Wenz und Solo — bayerisches Blatt.</p>
-          <button type="button" className="primary-btn large" onClick={onNewHand}>
-            Geben
-          </button>
+function OpponentHud({
+  player,
+  seat,
+  state,
+  team,
+  names,
+}: {
+  player: PlayerId
+  seat: SceneDef['seats'][1]
+  state: PublicState
+  team: number[]
+  names: Record<PlayerId, string>
+}) {
+  const bubble = speechFor(player, state)
+  const nameTop = Math.max(4, seat.mouth.y - 10)
+  return (
+    <>
+      <div
+        className="name-pin"
+        style={{ left: `${seat.mouth.x}%`, top: `${nameTop}%` }}
+      >
+        <SeatBadge player={player} state={state} team={team} names={names} />
+      </div>
+      {bubble && (
+        <div
+          className="bubble-pin"
+          style={{ left: `${seat.mouth.x}%`, top: `${seat.mouth.y}%` }}
+        >
+          <div className="speech-bubble" aria-live="polite">
+            {bubble}
+            <span className="speech-bubble-tail" aria-hidden="true" />
+          </div>
         </div>
       )}
-    </div>
+    </>
   )
+}
+
+function speechFor(player: PlayerId, state: PublicState): string | null {
+  if (state.phase === 'bidding') {
+    const bid = state.bids[player]
+    if (bid) return formatBid(bid) === 'Weiter' ? 'Weiter!' : formatBid(bid)
+    if (state.currentBidder === player) return '…'
+    return null
+  }
+  if (state.phase === 'playing' && state.whoseTurn === player && state.currentTrick.length === 0) {
+    return 'raus'
+  }
+  return null
 }
 
 function fanDeg(index: number, total: number): number {
@@ -197,40 +247,16 @@ function playHint(state: PublicState, legal: CardId[], isHumanPlay: boolean): st
   return 'Keine Farbe — stechen oder abwerfen.'
 }
 
-function Seat({
-  player,
-  state,
-  team,
-  compact,
-  className = '',
-}: {
-  player: PlayerId
-  state: PublicState
-  team: number[]
-  compact?: boolean
-  className?: string
-}) {
-  const count = state.hands[player].length
-  return (
-    <div className={`seat ${SEAT_POS[player]} ${className}`}>
-      <SeatBadge player={player} state={state} team={team} />
-      <div className={`bot-fan ${compact ? 'compact' : ''}`}>
-        {Array.from({ length: count }).map((_, i) => (
-          <CardView key={i} card={'E7'} faceDown compact fanDeg={(i - (count - 1) / 2) * 5} />
-        ))}
-      </div>
-    </div>
-  )
-}
-
 function SeatBadge({
   player,
   state,
   team,
+  names,
 }: {
   player: PlayerId
   state: PublicState
   team: number[]
+  names: Record<PlayerId, string>
 }) {
   const score = state.sessionScores[player]
   const isCaller = state.contract?.caller === player
@@ -240,11 +266,8 @@ function SeatBadge({
     <div
       className={`seat-badge ${player === 0 ? 'you' : ''} ${onTeam ? 'team' : ''} ${isCaller ? 'caller' : ''}`}
     >
-      <span className={`avatar av-${player}`} aria-hidden>
-        {PLAYER_NAMES[player].slice(0, 1)}
-      </span>
       <div>
-        <strong>{PLAYER_NAMES[player]}</strong>
+        <strong>{names[player]}</strong>
         <span className="pts">{score > 0 ? `+${score}` : score} P</span>
       </div>
       {state.whoseTurn === player && <span className="turn-dot">am Zug</span>}

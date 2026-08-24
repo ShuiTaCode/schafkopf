@@ -11,10 +11,12 @@
   width: var(--card-w);
   height: var(--card-h);
   padding: 0;
-  border: none;
-  background: transparent;
+  border: 1px solid rgba(40, 28, 12, 0.5);
+  background: #ffffff;
   border-radius: 10px;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.38);
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.95),
+    0 12px 22px rgba(0, 0, 0, 0.6);
   cursor: default;
   transform: rotate(var(--fan)) translateY(0);
   transform-origin: 50% 100%;
@@ -23,10 +25,21 @@
   overflow: hidden;
 }
 
+.sk-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+  z-index: 0;
+}
+
 .sk-card-face {
   display: block;
+  position: relative;
+  z-index: 1;
   width: 100%;
   height: 100%;
+  background-color: #ffffff;
   background-image: url('/deck.webp');
   background-repeat: no-repeat;
   background-size: calc(var(--sw) / var(--cw) * var(--card-w)) calc(var(--sh) / var(--ch) * var(--card-h));
@@ -53,13 +66,15 @@
 .sk-card.is-interactive:hover,
 .sk-card.selected {
   transform: rotate(var(--fan)) translateY(-14px);
-  box-shadow: 0 16px 24px rgba(0, 0, 0, 0.45);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 16px 26px rgba(0, 0, 0, 0.55);
   z-index: 3;
 }
 
 .sk-card.is-disabled,
 .sk-card:disabled {
   cursor: default;
-  filter: grayscale(0.25) brightness(0.82);
-  opacity: 0.55;
+  filter: brightness(0.92) saturate(0.9);
+  opacity: 1;
 }

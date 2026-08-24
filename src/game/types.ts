@@ -66,6 +66,7 @@ export interface PublicState {
   awaitingContinue: boolean
   logLines: string[]
   message: string
+  playerNames: Record<PlayerId, string>
 }
 
 export const SUITS: Suit[] = ['E', 'G', 'H', 'S']

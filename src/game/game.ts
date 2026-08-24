@@ -41,9 +41,18 @@ export class SchafkopfGame {
   awaitingContinue = false
   logLines: string[] = []
   message = 'Bereit für eine neue Runde.'
+  playerNames: Record<PlayerId, string> = { ...PLAYER_NAMES }
   private passesInRow = 0
   private biddingOrder: PlayerId[] = []
   private biddingIndex = 0
+
+  setPlayerNames(names: Record<PlayerId, string>) {
+    this.playerNames = { ...names, 0: 'Du' }
+  }
+
+  private who(player: PlayerId): string {
+    return player === 0 ? 'Du' : this.playerNames[player]
+  }
 
   getState(): PublicState {
     return {
@@ -72,6 +81,7 @@ export class SchafkopfGame {
       awaitingContinue: this.awaitingContinue,
       logLines: [...this.logLines],
       message: this.message,
+      playerNames: { ...this.playerNames },
     }
   }
 
@@ -113,7 +123,7 @@ export class SchafkopfGame {
     this.currentBidder = this.biddingOrder[0]
     this.whoseTurn = this.currentBidder
     this.trickLeader = forehand
-    this.message = turnToBidMessage(this.currentBidder, this.highestBid)
+    this.message = turnToBidMessage(this.currentBidder, this.highestBid, this.playerNames)
     this.pushLog('Neue Karten gegeben.')
   }
 
@@ -136,7 +146,7 @@ export class SchafkopfGame {
     }
     this.whoseTurn = this.trickLeader
     this.message =
-      this.trickLeader === 0 ? 'Du kommst raus.' : `${PLAYER_NAMES[this.trickLeader]} kommt raus.`
+      this.trickLeader === 0 ? 'Du kommst raus.' : `${this.who(this.trickLeader)} kommt raus.`
     return this.getState()
   }
 
@@ -162,13 +172,12 @@ export class SchafkopfGame {
     this.bids[player] = bid
     if (bid.kind === 'pass') {
       this.passesInRow += 1
-      this.message = player === 0 ? 'Du sagst weiter.' : `${PLAYER_NAMES[player]} sagt weiter.`
+      this.message = player === 0 ? 'Du sagst weiter.' : `${this.who(player)} sagt weiter.`
     } else {
       this.passesInRow = 0
       this.highestBid = bid
       this.highestBidder = player
-      const who = player === 0 ? 'Du' : PLAYER_NAMES[player]
-      this.message = `${who}: ${formatBid(bid)}`
+      this.message = `${this.who(player)}: ${formatBid(bid)}`
     }
     this.pushLog(this.message)
 
@@ -178,6 +187,7 @@ export class SchafkopfGame {
 
     if (allPassed && everyoneActed) {
       this.message = 'Alle weiter — neu geben.'
+      this.pushLog(this.message)
       this.resetHand()
       return
     }
@@ -191,13 +201,18 @@ export class SchafkopfGame {
     let guard = 0
     while (guard < 8) {
       const next = this.biddingOrder[this.biddingIndex % 4]
-      this.biddingIndex += 1
       guard += 1
-      if (this.bids[next]?.kind === 'pass' && this.highestBid) continue
-      if (next === this.highestBidder && this.highestBid) continue
+      if (this.bids[next]?.kind === 'pass' && this.highestBid) {
+        this.biddingIndex += 1
+        continue
+      }
+      if (next === this.highestBidder && this.highestBid) {
+        this.biddingIndex += 1
+        continue
+      }
       this.currentBidder = next
       this.whoseTurn = next
-      this.message = turnToBidMessage(next, this.highestBid)
+      this.message = turnToBidMessage(next, this.highestBid, this.playerNames)
       return
     }
     if (this.highestBid && this.highestBidder !== null) {
@@ -221,16 +236,18 @@ export class SchafkopfGame {
     }
     this.message =
       forehand === 0
-        ? `${formatContract(this.contract)} — Du kommst raus.`
-        : `${formatContract(this.contract)} — ${PLAYER_NAMES[forehand]} kommt raus.`
-    this.pushLog(formatContract(this.contract))
+        ? `${formatContract(this.contract, this.playerNames)} — Du kommst raus.`
+        : `${formatContract(this.contract, this.playerNames)} — ${this.who(forehand)} kommt raus.`
+    this.pushLog(formatContract(this.contract, this.playerNames))
   }
 
   private playCard(player: PlayerId, card: CardId) {
     this.hands[player] = this.hands[player].filter((c) => c !== card)
     this.currentTrick.push({ player, card })
     this.message =
-      player === 0 ? `Du spielst ${cardLabel(card)}.` : `${PLAYER_NAMES[player]} spielt ${cardLabel(card)}.`
+      player === 0
+        ? `Du spielst ${cardLabel(card)}.`
+        : `${this.who(player)} spielt ${cardLabel(card)}.`
     this.pushLog(this.message)
 
     if (this.contract?.kind === 'rufspiel' && card === this.contract.calledAce) {
@@ -251,7 +268,9 @@ export class SchafkopfGame {
       points,
     })
     this.message =
-      winner === 0 ? `Du stichst (${points} Augen).` : `${PLAYER_NAMES[winner]} sticht (${points} Augen).`
+      winner === 0
+        ? `Du stichst (${points} Augen).`
+        : `${this.who(winner)} sticht (${points} Augen).`
     this.pushLog(this.message)
     this.trickLeader = winner
     this.whoseTurn = null
@@ -261,7 +280,7 @@ export class SchafkopfGame {
   private finishGame() {
     this.phase = 'finished'
     this.whoseTurn = null
-    this.result = scoreGame(this.contract!, this.finishedTricks)
+    this.result = scoreGame(this.contract!, this.finishedTricks, this.playerNames)
     for (const { player, delta } of this.result.seatDeltas) {
       this.sessionScores[player] += delta
     }
@@ -317,10 +336,14 @@ export class SchafkopfGame {
   }
 }
 
-function turnToBidMessage(player: PlayerId, highest: Bid | null): string {
+function turnToBidMessage(
+  player: PlayerId,
+  highest: Bid | null,
+  names: Record<PlayerId, string>,
+): string {
   const high = highest ? ` (liegt: ${formatBid(highest)})` : ''
   if (player === 0) return `Du bist dran mit dem Sagen${high}.`
-  return `${PLAYER_NAMES[player]} ist dran mit dem Sagen${high}.`
+  return `${names[player]} ist dran mit dem Sagen${high}.`
 }
 
 function formatBid(bid: Bid): string {
@@ -330,12 +353,15 @@ function formatBid(bid: Bid): string {
   return `Rufspiel auf ${SUIT_NAMES[bid.color]}`
 }
 
-function formatContract(contract: Contract): string {
-  if (contract.kind === 'wenz') return `Wenz von ${PLAYER_NAMES[contract.caller]}`
+function formatContract(
+  contract: Contract,
+  names: Record<PlayerId, string> = PLAYER_NAMES,
+): string {
+  if (contract.kind === 'wenz') return `Wenz von ${names[contract.caller]}`
   if (contract.kind === 'solo') {
-    return `${SUIT_NAMES[contract.color]}-Solo von ${PLAYER_NAMES[contract.caller]}`
+    return `${SUIT_NAMES[contract.color]}-Solo von ${names[contract.caller]}`
   }
-  return `Rufspiel ${SUIT_NAMES[contract.color]} von ${PLAYER_NAMES[contract.caller]} mit ${PLAYER_NAMES[contract.partner]}`
+  return `Rufspiel ${SUIT_NAMES[contract.color]} von ${names[contract.caller]} mit ${names[contract.partner]}`
 }
 
 export { formatBid, formatContract }

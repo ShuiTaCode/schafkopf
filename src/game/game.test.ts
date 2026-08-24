@@ -215,6 +215,82 @@ describe('bidding rank', () => {
   })
 })
 
+describe('bidding order', () => {
+  it('lets every player before the human speak on the first deal', () => {
+    const game = new SchafkopfGame()
+    game.startHand(() => 0.42)
+    const forehand = ((game.dealer + 1) % 4) as 0 | 1 | 2 | 3
+    let seat = forehand
+    while (seat !== 0) {
+      expect(game.bids[seat], `${seat} sollte schon gesagt haben`).toBeDefined()
+      seat = ((seat + 1) % 4) as 0 | 1 | 2 | 3
+    }
+  })
+
+  it('redeals when everyone says weiter', () => {
+    let found = false
+    for (let seed = 0; seed < 5000; seed++) {
+      const game = new SchafkopfGame()
+      game.startHand(mulberry32(seed))
+      if (game.phase !== 'bidding' || game.currentBidder !== 0) continue
+      if (![1, 2, 3].every((p) => game.bids[p as 1 | 2 | 3]?.kind === 'pass')) continue
+      const dealerBefore = game.dealer
+      game.humanBid({ kind: 'pass' })
+      expect(game.dealer).not.toBe(dealerBefore)
+      found = true
+      break
+    }
+    expect(found).toBe(true)
+  })
+
+  it('plays many hands without getting stuck in bidding', () => {
+    const game = new SchafkopfGame()
+    const random = mulberry32(20260824)
+    let finishedHands = 0
+    let actions = 0
+    game.startHand(random)
+    while (finishedHands < 40 && actions < 8000) {
+      actions += 1
+      if (game.awaitingContinue) {
+        game.acknowledgeTrick()
+        continue
+      }
+      if (game.phase === 'finished') {
+        finishedHands += 1
+        game.startHand(random)
+        continue
+      }
+      if (game.phase === 'bidding' && game.currentBidder === 0) {
+        game.humanBid({ kind: 'pass' })
+        continue
+      }
+      if (game.needsBot()) {
+        expect(game.stepBot(), `Bot-Schritt hängt (Aktion ${actions})`).toBe(true)
+        continue
+      }
+      if (game.phase === 'playing' && game.whoseTurn === 0) {
+        const legal = game.legalForHuman()
+        expect(legal.length).toBeGreaterThan(0)
+        game.humanPlay(legal[0])
+        continue
+      }
+      throw new Error(`Spiel hängt: phase=${game.phase} bidder=${game.currentBidder} turn=${game.whoseTurn}`)
+    }
+    expect(finishedHands).toBe(40)
+  })
+})
+
+function mulberry32(seed: number): () => number {
+  let a = seed >>> 0
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0
+    let t = a
+    t = Math.imul(t ^ (t >>> 15), t | 1)
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
 describe('hand sort', () => {
   it('groups trumps first even before a contract', () => {
     const sorted = sortHand(['EA', 'G7', 'H8', 'SU', 'EO'], null)
@@ -245,6 +321,8 @@ describe('trick continue', () => {
     expect(game.awaitingContinue).toBe(true)
     expect(game.currentTrick).toHaveLength(4)
     expect(game.whoseTurn).toBeNull()
+    expect(game.getState().awaitingContinue).toBe(true)
+    expect(game.getState().message).toMatch(/stichst|sticht/)
     game.acknowledgeTrick()
     expect(game.awaitingContinue).toBe(false)
     expect(game.currentTrick).toHaveLength(0)

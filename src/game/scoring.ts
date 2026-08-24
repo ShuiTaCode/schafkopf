@@ -22,7 +22,11 @@ export function runningAugen(
   return { playing: playingPoints, defending: defendingPoints }
 }
 
-export function scoreGame(contract: Contract, tricks: FinishedTrick[]): GameResult {
+export function scoreGame(
+  contract: Contract,
+  tricks: FinishedTrick[],
+  names: Record<PlayerId, string> = PLAYER_NAMES,
+): GameResult {
   const playing = playingTeam(contract) as PlayerId[]
   const defending = PLAYERS.filter((p) => !playing.includes(p))
 
@@ -75,7 +79,7 @@ export function scoreGame(contract: Contract, tricks: FinishedTrick[]): GameResu
 
   const outcome = playingWon ? 'gewonnen' : 'verloren'
   const extras = [schneider ? 'Schneider' : null, schwarz ? 'Schwarz' : null].filter(Boolean).join(', ')
-  const teamNames = playing.map((p) => PLAYER_NAMES[p]).join(' & ')
+  const teamNames = playing.map((p) => (p === 0 ? 'Du' : names[p])).join(' & ')
   const message = `${contractLabel}: ${teamNames} ${outcome} mit ${playingPoints} Augen${extras ? ` (${extras})` : ''}.`
 
   return {
