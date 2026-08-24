@@ -3,6 +3,7 @@ import { SchafkopfGame } from './game/game'
 import type { Bid, CardId, PublicState } from './game/types'
 import { GameTable } from './components/GameTable'
 import { namesFromScene, pickScene, type SceneDef } from './theme/scenes'
+import { enableImmersivePwa } from './pwa'
 
 const BOT_DELAY_MS = 620
 
@@ -63,6 +64,8 @@ function useGame() {
 
 export default function App() {
   const { state, scene, newHand, bid, play, continueTrick, legal } = useGame()
+
+  useEffect(() => enableImmersivePwa(), [])
 
   return (
     <GameTable
